@@ -6,6 +6,7 @@ import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.paint.Color;
+import uet.oop.bomberman.InputManager;
 import uet.oop.bomberman.graphics.Sprite;
 
 public abstract class Entity {
@@ -28,7 +29,7 @@ public abstract class Entity {
         gc.drawImage(img, x, y);
     }
 
-    public abstract void update(double time);
+    public abstract void update(InputManager input, double time);
 
     public Rectangle2D getBoundary() {
         return new Rectangle2D(x, y, img.getWidth(), img.getHeight());

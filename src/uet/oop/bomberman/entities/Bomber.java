@@ -4,14 +4,17 @@ import javafx.scene.SnapshotParameters;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.input.KeyCode;
 import javafx.scene.paint.Color;
+import uet.oop.bomberman.InputManager;
 import uet.oop.bomberman.graphics.Sprite;
+import uet.oop.bomberman.graphics.SpritePlayer;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class Bomber extends Entity {
-    List<String> input;
     List<Entity> stillObjects;
     int bomberSpeed = 5;
 
@@ -20,58 +23,48 @@ public class Bomber extends Entity {
     public Image[] frames_left = new Image[3];
     public Image[] frames_right = new Image[3];
     public Image[] frames_dead = new Image[3];
-    public double duration = 0.100;
 
+    private SpritePlayer moveUpSprite;
+    private SpritePlayer moveDownSprite;
+    private SpritePlayer moveLeftSprite;
+    private SpritePlayer moveRightSprite;
 
-    public Bomber(int x, int y, Image img, List<String> input, List<Entity> stillObjects) {
-        super(x, y, img);
-        frames_up[0] = Sprite.player_up.getFxImage();
-        frames_up[1] = Sprite.player_up_1.getFxImage();
-        frames_up[2] = Sprite.player_up_2.getFxImage();
+    private static final double DURATION = 0.100;
 
-        frames_down[0] = Sprite.player_down.getFxImage();
-        frames_down[1] = Sprite.player_down_1.getFxImage();
-        frames_down[2] = Sprite.player_down_2.getFxImage();
+    public Bomber(int x, int y, List<Entity> stillObjects) {
+        super(x, y, Sprite.player_down.getFxImage());
 
-        frames_left[0] = Sprite.player_left.getFxImage();
-        frames_left[1] = Sprite.player_left_1.getFxImage();
-        frames_left[2] = Sprite.player_left_2.getFxImage();
+        moveUpSprite = new SpritePlayer(Arrays.asList(Sprite.player_up, Sprite.player_up_1, Sprite.player_up_2),
+                DURATION);
+        moveDownSprite = new SpritePlayer(Arrays.asList(Sprite.player_down, Sprite.player_down_1,
+                Sprite.player_down_2), DURATION);
+        moveLeftSprite = new SpritePlayer(Arrays.asList(Sprite.player_left, Sprite.player_left_1,
+                Sprite.player_left_2), DURATION);
+        moveRightSprite = new SpritePlayer(Arrays.asList(Sprite.player_right, Sprite.player_right_1,
+                Sprite.player_right_2), DURATION);
 
-        frames_right[0] = Sprite.player_right.getFxImage();
-        frames_right[1] = Sprite.player_right_1.getFxImage();
-        frames_right[2] = Sprite.player_right_2.getFxImage();
-
-        frames_dead[0] = Sprite.player_dead1.getFxImage();
-        frames_dead[1] = Sprite.player_dead2.getFxImage();
-        frames_dead[2] = Sprite.player_dead3.getFxImage();
-
-        this.input = input;
         this.stillObjects = stillObjects;
     }
 
     @Override
-    public void update(double time) {
-        moving(time);
-    }
-
-    public void moving(double time) {
-        if (input.contains("LEFT")) {
-            img = getFrame(time, frames_left);
+    public void update(InputManager input, double time) {
+        if (input.isKeyPressed(KeyCode.LEFT)) {
+            img = moveLeftSprite.playFrame(time);
             x -= bomberSpeed;
             if (!canMove()) x += bomberSpeed;
         }
-        else if (input.contains("RIGHT")) {
-            img = getFrame(time, frames_right);
+        else if (input.isKeyPressed(KeyCode.RIGHT)) {
+            img = moveRightSprite.playFrame(time);
             x += bomberSpeed;
             if (!canMove()) x -= bomberSpeed;
         }
-        else if (input.contains("UP")) {
-            img = getFrame(time, frames_up);
+        else if (input.isKeyPressed(KeyCode.UP)) {
+            img = moveUpSprite.playFrame(time);
             y -= bomberSpeed;
             if (!canMove()) y += bomberSpeed;
         }
-        else if (input.contains("DOWN")) {
-            img = getFrame(time, frames_down);
+        else if (input.isKeyPressed(KeyCode.DOWN)) {
+            img = moveDownSprite.playFrame(time);
             y += bomberSpeed;
             if (!canMove()) y -= bomberSpeed;
         }
@@ -84,10 +77,5 @@ public class Bomber extends Entity {
             }
         }
         return true;
-    }
-
-    public Image getFrame(double time, Image[] frames) {
-        int index = (int) ((time % (frames.length * duration)) / duration);
-        return frames[index];
     }
 }

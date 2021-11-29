@@ -7,10 +7,7 @@ import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.stage.Stage;
-import uet.oop.bomberman.entities.Bomber;
-import uet.oop.bomberman.entities.Entity;
-import uet.oop.bomberman.entities.Grass;
-import uet.oop.bomberman.entities.Wall;
+import uet.oop.bomberman.entities.*;
 import uet.oop.bomberman.graphics.Sprite;
 
 import java.util.ArrayList;
@@ -23,9 +20,10 @@ public class BombermanGame extends Application {
 
     private GraphicsContext gc;
     private Canvas canvas;
+
     private List<Entity> entities = new ArrayList<>();
     private List<Entity> stillObjects = new ArrayList<>();
-    private List<String> input = new ArrayList<>();
+    private InputManager inputManager;
 
     public static void main(String[] args) {
         Application.launch(BombermanGame.class);
@@ -43,7 +41,7 @@ public class BombermanGame extends Application {
 
         // Tao scene
         Scene scene = new Scene(root);
-        arrowKeyEvent(scene);
+        inputManager = new InputManager(scene);
 
         // Them scene vao stage
         stage.setScene(scene);
@@ -61,7 +59,7 @@ public class BombermanGame extends Application {
 
         createMap();
 
-        Entity bomberman = new Bomber(1, 1, Sprite.player_down.getFxImage(), input, stillObjects);
+        Entity bomberman = new Bomber(1, 1, stillObjects);
         entities.add(bomberman);
     }
 
@@ -70,17 +68,21 @@ public class BombermanGame extends Application {
             for (int j = 0; j < HEIGHT; j++) {
                 Entity object;
                 if (j == 0 || j == HEIGHT - 1 || i == 0 || i == WIDTH - 1) {
-                    object = new Wall(i, j, Sprite.wall.getFxImage());
+                    object = new Wall(i, j);
                 } else {
-                    object = new Grass(i, j, Sprite.grass.getFxImage());
+                    if ((i == WIDTH / 2) && (j == HEIGHT / 2)) {
+                        object = new Ballom(i, j);
+                    } else
+                        object = new Grass(i, j);
                 }
+
                 stillObjects.add(object);
             }
         }
     }
 
     public void update(double time) {
-        entities.forEach(entity -> entity.update(time));
+        entities.forEach(entity -> entity.update(inputManager, time));
     }
 
     public void render() {
@@ -89,18 +91,7 @@ public class BombermanGame extends Application {
         entities.forEach(g -> g.render(gc));
     }
 
-    public void arrowKeyEvent(Scene theScene) {
-        theScene.setOnKeyPressed(
-                e -> {
-                    String code = e.getCode().toString();
-                    if (!input.contains(code))
-                        input.add(code);
-                });
-
-        theScene.setOnKeyReleased(
-                e -> {
-                    String code = e.getCode().toString();
-                    input.remove(code);
-                });
+    public InputManager getInputManager() {
+        return inputManager;
     }
 }
