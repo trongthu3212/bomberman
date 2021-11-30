@@ -10,13 +10,11 @@ import javafx.stage.Stage;
 import uet.oop.bomberman.entities.*;
 import uet.oop.bomberman.graphics.Sprite;
 
+import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.List;
 
 public class BombermanGame extends Application {
-
-    public static final int WIDTH = 20;
-    public static final int HEIGHT = 15;
 
     private GraphicsContext gc;
     private Canvas canvas;
@@ -25,6 +23,11 @@ public class BombermanGame extends Application {
     private List<Entity> stillObjects = new ArrayList<>();
     private InputManager inputManager;
 
+    private Map map = new Map(1);
+
+    public BombermanGame() throws FileNotFoundException {
+    }
+
     public static void main(String[] args) {
         Application.launch(BombermanGame.class);
     }
@@ -32,7 +35,7 @@ public class BombermanGame extends Application {
     @Override
     public void start(Stage stage) {
         // Tao Canvas
-        canvas = new Canvas(Sprite.SCALED_SIZE * WIDTH, Sprite.SCALED_SIZE * HEIGHT);
+        canvas = new Canvas(Sprite.SCALED_SIZE * map.getColumns(), Sprite.SCALED_SIZE * map.getRows());
         gc = canvas.getGraphicsContext2D();
 
         // Tao root container
@@ -59,24 +62,17 @@ public class BombermanGame extends Application {
 
         createMap();
 
-        Entity bomberman = new Bomber(1, 1, stillObjects);
-        entities.add(bomberman);
     }
 
     public void createMap() {
-        for (int i = 0; i < WIDTH; i++) {
-            for (int j = 0; j < HEIGHT; j++) {
-                Entity object;
-                if (j == 0 || j == HEIGHT - 1 || i == 0 || i == WIDTH - 1) {
-                    object = new Wall(i, j);
+        for (int i = 0; i < map.getRows(); i++) {
+            for (int j = 0; j < map.getColumns(); j++) {
+                if (map.entities.get(i).get(j) instanceof Grass || map.entities.get(i).get(j) instanceof Wall) {
+                    stillObjects.add(map.entities.get(i).get(j));
                 } else {
-                    if ((i == WIDTH / 2) && (j == HEIGHT / 2)) {
-                        object = new Ballom(i, j);
-                    } else
-                        object = new Grass(i, j);
+                    entities.add(map.entities.get(i).get(j));
+                    stillObjects.add(new Grass(j, i));
                 }
-
-                stillObjects.add(object);
             }
         }
     }
@@ -91,7 +87,4 @@ public class BombermanGame extends Application {
         entities.forEach(g -> g.render(gc));
     }
 
-    public InputManager getInputManager() {
-        return inputManager;
-    }
 }

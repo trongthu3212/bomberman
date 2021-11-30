@@ -6,14 +6,15 @@ import uet.oop.bomberman.graphics.SpritePlayer;
 
 import java.util.Arrays;
 
-public class Ballom extends Entity {
+public class Balloom extends Entity {
     private SpritePlayer balloomMoveLeftSprite;
     private SpritePlayer balloomMoveRightSprite;
+    private SpritePlayer balloomDeadSprite;
 
     private static final double DURATION = 0.100;
     private static final int VELOCITY = 1;
 
-    public Ballom(int x, int y) {
+    public Balloom(int x, int y) {
         super(x, y, Sprite.balloom_left1.getFxImage());
 
         balloomMoveLeftSprite = new SpritePlayer(
@@ -23,6 +24,8 @@ public class Ballom extends Entity {
         balloomMoveRightSprite = new SpritePlayer(
                 Arrays.asList(Sprite.balloom_right1, Sprite.balloom_right2, Sprite.balloom_right3),
                 DURATION);
+        balloomMoveRightSprite = new SpritePlayer(
+                Arrays.asList(Sprite.balloom_dead), DURATION);
     }
 
     @Override
