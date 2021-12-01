@@ -1,6 +1,7 @@
 package uet.oop.bomberman.entities;
 
 import uet.oop.bomberman.InputManager;
+import uet.oop.bomberman.Map;
 import uet.oop.bomberman.graphics.Sprite;
 import uet.oop.bomberman.graphics.SpritePlayer;
 
@@ -14,8 +15,8 @@ public class Balloom extends Entity {
     private static final double DURATION = 0.100;
     private static final int VELOCITY = 1;
 
-    public Balloom(int x, int y) {
-        super(x, y, Sprite.balloom_left1.getFxImage());
+    public Balloom(Map map, int x, int y) {
+        super(map, x, y, FLAG_FLAME_EATABLE | FLAG_PLAYER_HARDBLOCK, Sprite.balloom_left1.getFxImage());
 
         balloomMoveLeftSprite = new SpritePlayer(
                 Arrays.asList(Sprite.balloom_left1, Sprite.balloom_left2, Sprite.balloom_left3),

@@ -1,7 +1,9 @@
 package uet.oop.bomberman.entities;
 
+import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.input.KeyCode;
 import uet.oop.bomberman.InputManager;
+import uet.oop.bomberman.Map;
 import uet.oop.bomberman.graphics.Sprite;
 import uet.oop.bomberman.graphics.SpritePlayer;
 
@@ -9,8 +11,7 @@ import java.util.Arrays;
 import java.util.List;
 
 public class Bomber extends Entity {
-    List<List<Entity>> stillObjects;
-    int bomberSpeed = 5;
+    int bomberSpeed = 2;
 
     private SpritePlayer moveUpSprite;
     private SpritePlayer moveDownSprite;
@@ -20,8 +21,8 @@ public class Bomber extends Entity {
 
     private static final double DURATION = 0.100;
 
-    public Bomber(int x, int y, List<List<Entity>> stillObjects) {
-        super(x, y, Sprite.player_down.getFxImage());
+    public Bomber(Map map, int x, int y) {
+        super(map, x, y, FLAG_ENEMY_EATABLE, Sprite.player_down.getFxImage());
 
         moveUpSprite = new SpritePlayer(Arrays.asList(Sprite.player_up, Sprite.player_up_1, Sprite.player_up_2),
                 DURATION);
@@ -34,38 +35,46 @@ public class Bomber extends Entity {
         deadSprite = new SpritePlayer(Arrays.asList(Sprite.player_dead1, Sprite.player_dead2,
                 Sprite.player_dead3), DURATION);
 
-        this.stillObjects = stillObjects;
+        map.registerForUpdating(this);
     }
 
     @Override
     public void update(InputManager input, double time) {
+        int stepX = 0;
+        int stepY = 0;
+
         if (input.isKeyPressed(KeyCode.LEFT)) {
             img = moveLeftSprite.playFrame(time);
-            x -= bomberSpeed;
-            if (!canMove()) x += bomberSpeed;
+            stepX = -bomberSpeed;
         } else if (input.isKeyPressed(KeyCode.RIGHT)) {
             img = moveRightSprite.playFrame(time);
-            x += bomberSpeed;
-            if (!canMove()) x -= bomberSpeed;
+            stepX = bomberSpeed;
         } else if (input.isKeyPressed(KeyCode.UP)) {
             img = moveUpSprite.playFrame(time);
-            y -= bomberSpeed;
-            if (!canMove()) y += bomberSpeed;
+            stepY = -bomberSpeed;
         } else if (input.isKeyPressed(KeyCode.DOWN)) {
             img = moveDownSprite.playFrame(time);
-            y += bomberSpeed;
-            if (!canMove()) y -= bomberSpeed;
+            stepY = bomberSpeed;
         }
-    }
 
-    public boolean canMove() {
-        for (List<Entity> entityList : stillObjects) {
-            for (Entity entity : entityList) {
-                if (entity instanceof Wall && this.intersects(entity)) {
-                    return false;
+        boolean shouldMove = true;
+
+        if ((stepX != 0) || (stepY != 0)) {
+            x += stepX;
+            y += stepY;
+
+            List<Entity> entities = map.getEntitiesWithFlags(FLAG_PLAYER_HARDBLOCK);
+            for (Entity entity: entities) {
+                if (entity.intersects(this)) {
+                    shouldMove = false;
+                    break;
                 }
             }
+
+            if (!shouldMove) {
+                x -= stepX;
+                y -= stepY;
+            }
         }
-        return true;
     }
 }

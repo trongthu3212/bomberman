@@ -1,12 +1,13 @@
 package uet.oop.bomberman.entities;
 
 import uet.oop.bomberman.InputManager;
+import uet.oop.bomberman.Map;
 import uet.oop.bomberman.graphics.Sprite;
 
 public class Wall extends Entity {
 
-    public Wall(int x, int y) {
-        super(x, y, Sprite.wall.getFxImage());
+    public Wall(Map map, int x, int y) {
+        super(map, x, y, FLAG_PLAYER_HARDBLOCK, Sprite.wall.getFxImage());
     }
 
     @Override

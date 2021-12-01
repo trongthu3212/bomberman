@@ -6,6 +6,7 @@ import javafx.scene.Group;
 import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
+import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 import uet.oop.bomberman.entities.*;
 import uet.oop.bomberman.graphics.Sprite;
@@ -59,32 +60,16 @@ public class BombermanGame extends Application {
                 update(time);
             }
         }.start();
-
-        createMap();
-
-    }
-
-    public void createMap() {
-        for (int i = 0; i < map.getRows(); i++) {
-            for (int j = 0; j < map.getColumns(); j++) {
-                if (map.entities.get(i).get(j) instanceof Grass || map.entities.get(i).get(j) instanceof Wall) {
-                    stillObjects.add(map.entities.get(i).get(j));
-                } else {
-                    entities.add(map.entities.get(i).get(j));
-                    stillObjects.add(new Grass(j, i));
-                }
-            }
-        }
     }
 
     public void update(double time) {
-        entities.forEach(entity -> entity.update(inputManager, time));
+        map.update(inputManager, time);
     }
 
     public void render() {
-        gc.clearRect(0, 0, canvas.getWidth(), canvas.getHeight());
-        stillObjects.forEach(g -> g.render(gc));
-        entities.forEach(g -> g.render(gc));
+        gc.setFill(Color.web("#81c483"));
+        gc.fillRect(0, 0, canvas.getWidth(), canvas.getHeight());
+        map.render(gc);
     }
 
 }

@@ -1,5 +1,6 @@
 package uet.oop.bomberman;
 
+import javafx.scene.canvas.GraphicsContext;
 import uet.oop.bomberman.entities.*;
 
 import java.io.File;
@@ -9,7 +10,9 @@ import java.util.List;
 import java.util.Scanner;
 
 public class Map {
-    public static List<List<Entity>> entities = new ArrayList<>();
+    public List<Entity> entities = new ArrayList<>();
+    public List<Entity> registeredUpdateEntities = new ArrayList<>();
+
     private static int rows;
     private static int columns;
 
@@ -23,41 +26,39 @@ public class Map {
 
         for (int i = 0; i < rows; i++) {
             String row = scanner.nextLine();
-            List<Entity> list = new ArrayList<>();
             for (int j = 0; j < columns; j++) {
                 switch (row.charAt(j)) {
                     case '#':
-                        list.add(new Wall(j, i));
+                        entities.add(new Wall(this, j, i));
                         break;
                     case '*':
-                        list.add(new Brick(j, i));
+                        entities.add(new Brick(this, j, i));
                         break;
                     case 'x':
-                        list.add(new Portal(j, i));
+                        entities.add(new Portal(this, j, i));
                         break;
                     case 'p':
-                        list.add(new Bomber(j, i, entities));
+                        entities.add(new Bomber(this, j, i));
                         break;
                     case '1':
-                        list.add(new Balloom(j, i));
+                        entities.add(new Balloom(this, j, i));
                         break;
                     case '2':
-                        list.add(new Oneal(j, i));
+                        entities.add(new Oneal(this, j, i));
                         break;
                     case 'b':
-                        list.add(new BombItem(j, i));
+                        entities.add(new BombItem(this, j, i));
                         break;
                     case 'f':
-                        list.add(new FlameItem(j, i));
+                        entities.add(new FlameItem(this, j, i));
                         break;
                     case 's':
-                        list.add(new SpeedItem(j, i));
+                        entities.add(new SpeedItem(this, j, i));
                         break;
                     default:
-                        list.add(new Grass(j, i));
+                        break;
                 }
             }
-            entities.add(list);
         }
     }
 
@@ -67,5 +68,37 @@ public class Map {
 
     public int getColumns() {
         return columns;
+    }
+
+    public void registerForUpdating(Entity entity) {
+        if (!registeredUpdateEntities.contains(entity)) {
+            registeredUpdateEntities.add(entity);
+        }
+    }
+
+    public void update(InputManager manager, double time) {
+        for (Entity entity: registeredUpdateEntities) {
+            entity.update(manager, time);
+        }
+    }
+
+    public List<Entity> getEntitiesWithFlags(int flagMask) {
+        List<Entity> result = new ArrayList<>();
+
+        for (Entity entity: entities) {
+            if ((entity.getFlags() & flagMask) != 0) {
+                result.add(entity);
+            }
+        }
+
+        return result;
+    }
+
+    public void render(GraphicsContext context) {
+        for (Entity entity: entities) {
+            if (entity != null) {
+                entity.render(context);
+            }
+        }
     }
 }
