@@ -7,7 +7,7 @@ import uet.oop.bomberman.graphics.Sprite;
 public class Wall extends Entity {
 
     public Wall(Map map, int x, int y) {
-        super(map, x, y, FLAG_PLAYER_HARDBLOCK, Sprite.wall.getFxImage());
+        super(map, x, y, FLAG_PLAYER_HARDBLOCK | FLAG_ENEMY_HARDBLOCK, Sprite.wall.getFxImage());
     }
 
     @Override

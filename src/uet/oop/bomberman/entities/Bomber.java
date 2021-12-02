@@ -1,5 +1,6 @@
 package uet.oop.bomberman.entities;
 
+import javafx.geometry.Point2D;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.input.KeyCode;
 import uet.oop.bomberman.InputManager;
@@ -19,10 +20,28 @@ public class Bomber extends Entity {
     private SpritePlayer moveRightSprite;
     private SpritePlayer deadSprite;
 
+    private int lastStepX;
+    private int lastStepY;
+
+    private int bombLeft;
+    private int lastBombPutUnitX;
+    private int lastBombPutUnitY;
+    private int totalBomb;
+    private int bombLength;
+    private double lastBombSpawnTime = 0;
+
     private static final double DURATION = 0.100;
+    private static final double BOMB_SPAWN_COOLDOWN = 0.300;
 
     public Bomber(Map map, int x, int y) {
-        super(map, x, y, FLAG_ENEMY_EATABLE, Sprite.player_down.getFxImage());
+        super(map, x, y, FLAG_ENEMY_EATABLE | FLAG_FLAME_EATABLE, Sprite.player_down.getFxImage());
+
+        totalBomb = 2;
+        bombLeft = totalBomb;
+        bombLength = 1;
+
+        lastBombPutUnitX = -1;
+        lastBombPutUnitY = -1;
 
         moveUpSprite = new SpritePlayer(Arrays.asList(Sprite.player_up, Sprite.player_up_1, Sprite.player_up_2),
                 DURATION);
@@ -36,6 +55,35 @@ public class Bomber extends Entity {
                 Sprite.player_dead3), DURATION);
 
         map.registerForUpdating(this);
+    }
+
+    public void trySpawnBomb(double currentTime) {
+        if ((bombLeft <= 0) || (currentTime - lastBombSpawnTime < BOMB_SPAWN_COOLDOWN)) {
+            return;
+        }
+
+        // Round up the unit to spawn depending on how many percentage of the tile we are sitting on
+        int unitSpawnBombX = (x + ((x % Entity.SIZE >= 24) ? Entity.SIZE - 1 : 0)) / Entity.SIZE;
+        int unitSpawnBombY = (y + ((y % Entity.SIZE >= 24) ? Entity.SIZE - 1 : 0)) / Entity.SIZE;
+
+        if ((lastBombPutUnitX > 0) && (lastBombPutUnitY > 0)) {
+            if ((lastBombPutUnitX == unitSpawnBombX) && (lastBombPutUnitY == unitSpawnBombY)) {
+                // Can't place bomb at the same place
+                return;
+            }
+        }
+
+        lastBombPutUnitX = unitSpawnBombX;
+        lastBombPutUnitY = unitSpawnBombY;
+
+        bombLeft--;
+        lastBombSpawnTime = currentTime;
+
+        map.spawnEntity(new Bomb(map, this, unitSpawnBombX, unitSpawnBombY, bombLength));
+    }
+
+    public void bombExploded() {
+        bombLeft++;
     }
 
     @Override
@@ -57,23 +105,49 @@ public class Bomber extends Entity {
             stepY = bomberSpeed;
         }
 
+        if (input.isKeyPressed(KeyCode.SPACE)) {
+            trySpawnBomb(time);
+        }
+
         boolean shouldMove = true;
 
         if ((stepX != 0) || (stepY != 0)) {
+            // Try smooth movement on turn
+            if ((stepX != 0) && (lastStepY != 0)) {
+                if (y % Entity.SIZE >= 24) {
+                    stepY = (y + Entity.SIZE - 1) / Entity.SIZE * Entity.SIZE - y;
+                } else if ((y % Entity.SIZE <= 8)) {
+                    stepY = y / Entity.SIZE * Entity.SIZE - y;
+                }
+            } else if ((stepY != 0) && (lastStepX != 0)) {
+                if (x % Entity.SIZE >= 24) {
+                    stepX = (x + Entity.SIZE - 1) / Entity.SIZE * Entity.SIZE - x;
+                } else if ((x % Entity.SIZE <= 8))  {
+                    stepX = x / Entity.SIZE * Entity.SIZE - x;
+                }
+            }
+
             x += stepX;
             y += stepY;
 
             List<Entity> entities = map.getEntitiesWithFlags(FLAG_PLAYER_HARDBLOCK);
             for (Entity entity: entities) {
-                if (entity.intersects(this)) {
-                    shouldMove = false;
-                    break;
+                Point2D intersectSize = entity.getIntersectSize(this);
+                if (intersectSize != null) {
+                    // Perform smooth edge move
+                    if ((intersectSize.getX() > 4) || (intersectSize.getY() > 4)) {
+                        shouldMove = false;
+                        break;
+                    }
                 }
             }
 
             if (!shouldMove) {
                 x -= stepX;
                 y -= stepY;
+            } else {
+                lastStepY = stepY;
+                lastStepX = stepX;
             }
         }
     }

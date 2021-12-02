@@ -10,13 +10,20 @@ import java.util.List;
 import java.util.Scanner;
 
 public class Map {
-    public List<Entity> entities = new ArrayList<>();
-    public List<Entity> registeredUpdateEntities = new ArrayList<>();
+    private List<Entity> layer0Entities = new ArrayList<>();
+    private List<Entity> layer1Entities = new ArrayList<>();
+    private List<Entity> layer2Entities = new ArrayList<>();
+    private List<Entity> registeredUpdateEntities = new ArrayList<>();
+    private List<Entity> pendingUpdateRegisters = new ArrayList<>();
+    private List<Entity> pendingUpdateRemovals = new ArrayList<>();
 
     private static int rows;
     private static int columns;
+    private boolean isInUpdate;
 
     public Map(int level) throws FileNotFoundException {
+        this.isInUpdate = false;
+
         String path = "res/levels/Level" + level + ".txt";
         Scanner scanner = new Scanner(new File(path));
         scanner.nextInt();
@@ -29,31 +36,31 @@ public class Map {
             for (int j = 0; j < columns; j++) {
                 switch (row.charAt(j)) {
                     case '#':
-                        entities.add(new Wall(this, j, i));
+                        layer2Entities.add(new Wall(this, j, i));
                         break;
                     case '*':
-                        entities.add(new Brick(this, j, i));
+                        layer2Entities.add(new Brick(this, j, i));
                         break;
                     case 'x':
-                        entities.add(new Portal(this, j, i));
+                        layer0Entities.add(new Portal(this, j, i));
                         break;
                     case 'p':
-                        entities.add(new Bomber(this, j, i));
+                        layer1Entities.add(new Bomber(this, j, i));
                         break;
                     case '1':
-                        entities.add(new Balloom(this, j, i));
+                        layer1Entities.add(new Balloom(this, j, i));
                         break;
                     case '2':
-                        entities.add(new Oneal(this, j, i));
+                        layer1Entities.add(new Oneal(this, j, i));
                         break;
                     case 'b':
-                        entities.add(new BombItem(this, j, i));
+                        layer0Entities.add(new BombItem(this, j, i));
                         break;
                     case 'f':
-                        entities.add(new FlameItem(this, j, i));
+                        layer0Entities.add(new FlameItem(this, j, i));
                         break;
                     case 's':
-                        entities.add(new SpeedItem(this, j, i));
+                        layer0Entities.add(new SpeedItem(this, j, i));
                         break;
                     default:
                         break;
@@ -72,20 +79,78 @@ public class Map {
 
     public void registerForUpdating(Entity entity) {
         if (!registeredUpdateEntities.contains(entity)) {
-            registeredUpdateEntities.add(entity);
+            if (isInUpdate && !pendingUpdateRegisters.contains(entity)) {
+                pendingUpdateRegisters.add(entity);
+            } else {
+                registeredUpdateEntities.add(entity);
+            }
+        }
+    }
+
+    public void spawnEntity(Entity entity) {
+        if (entity instanceof Wall || entity instanceof Brick) {
+            layer2Entities.add(entity);
+        } else if (entity instanceof Bomber || entity instanceof Balloom || entity instanceof Oneal
+                || entity instanceof Bomb) {
+            layer1Entities.add(entity);
+        } else {
+            layer0Entities.add(entity);
+        }
+    }
+
+    public void despawnEntity(Entity entity) {
+        if (entity instanceof Wall || entity instanceof Brick) {
+            layer2Entities.remove(entity);
+        } else if (entity instanceof Bomber || entity instanceof Balloom || entity instanceof Oneal
+                || entity instanceof Bomb) {
+            layer1Entities.remove(entity);
+        } else {
+            layer0Entities.remove(entity);
+        }
+        if (pendingUpdateRegisters.contains(entity)) {
+            pendingUpdateRegisters.remove(entity);
+        } else if (isInUpdate && registeredUpdateEntities.contains(entity)) {
+            pendingUpdateRemovals.add(entity);
         }
     }
 
     public void update(InputManager manager, double time) {
+        isInUpdate = true;
+
         for (Entity entity: registeredUpdateEntities) {
             entity.update(manager, time);
         }
+
+        isInUpdate = false;
+
+        for (Entity entity: pendingUpdateRegisters) {
+            registeredUpdateEntities.add(entity);
+        }
+
+        for (Entity entity: pendingUpdateRemovals) {
+            registeredUpdateEntities.remove(entity);
+        }
+
+        pendingUpdateRegisters.clear();
+        pendingUpdateRemovals.clear();
     }
 
     public List<Entity> getEntitiesWithFlags(int flagMask) {
         List<Entity> result = new ArrayList<>();
 
-        for (Entity entity: entities) {
+        for (Entity entity: layer0Entities) {
+            if ((entity.getFlags() & flagMask) != 0) {
+                result.add(entity);
+            }
+        }
+
+        for (Entity entity: layer1Entities) {
+            if ((entity.getFlags() & flagMask) != 0) {
+                result.add(entity);
+            }
+        }
+
+        for (Entity entity: layer2Entities) {
             if ((entity.getFlags() & flagMask) != 0) {
                 result.add(entity);
             }
@@ -95,10 +160,8 @@ public class Map {
     }
 
     public void render(GraphicsContext context) {
-        for (Entity entity: entities) {
-            if (entity != null) {
-                entity.render(context);
-            }
-        }
+        layer0Entities.forEach(e -> e.render(context));
+        layer1Entities.forEach(e -> e.render(context));
+        layer2Entities.forEach(e -> e.render(context));
     }
 }
