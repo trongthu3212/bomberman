@@ -1,6 +1,5 @@
 package uet.oop.bomberman.entities;
 
-import javafx.geometry.Point2D;
 import uet.oop.bomberman.InputManager;
 import uet.oop.bomberman.Map;
 import uet.oop.bomberman.graphics.Sprite;
@@ -14,27 +13,43 @@ public class Bomb extends Entity {
     private Bomber spawner;
 
     private double timeStart = 0;
-    private int explodeLength = 1;
+    private int explodeLength;
     private boolean waitExplode = true;
+    private boolean isDead = false;
 
     private static final double DURATION = 0.2000;
     private static final double BOMB_EXPLODE_TIME = 1.5000;
     private static final double BOMB_FLAME_TIME = 0.4000;
 
     public Bomb(Map map, Bomber spawner, int xUnit, int yUnit, int explodeLength) {
-        super(map, xUnit, yUnit, FLAG_ENEMY_HARDBLOCK, null);
+        super(map, xUnit, yUnit, FLAG_ENEMY_HARDBLOCK | FLAG_FLAME_EATABLE, null);
 
         this.spawner = spawner;
 
         this.bombSprite = new SpritePlayer(Arrays.asList(Sprite.bomb, Sprite.bomb_1, Sprite.bomb_2), DURATION);
         this.bombExplodedSprite = new SpritePlayer(Arrays.asList(Sprite.bomb_exploded, Sprite.bomb_exploded1, Sprite.bomb_exploded2),
                 DURATION);
-
+        this.explodeLength = explodeLength;
         map.registerForUpdating(this);
     }
 
     @Override
     public void update(InputManager input, double time) {
+        if (isDead) {
+            int xUnit = x / Entity.SIZE;
+            int yUnit = y / Entity.SIZE;
+
+            map.spawnEntity(new Explosion(map, xUnit - 1, yUnit, 0, explodeLength));
+            map.spawnEntity(new Explosion(map, xUnit + 1, yUnit, 1, explodeLength));
+            map.spawnEntity(new Explosion(map, xUnit, yUnit - 1, 2, explodeLength));
+            map.spawnEntity(new Explosion(map, xUnit, yUnit + 1, 3, explodeLength));
+
+            spawner.bombExploded();
+            map.despawnEntity(this);
+
+            return;
+        }
+
         if (timeStart == 0) {
             timeStart = time;
         }
@@ -68,5 +83,9 @@ public class Bomb extends Entity {
             spawner.bombExploded();
             map.despawnEntity(this);
         }
+    }
+
+    public void dead() {
+        isDead = true;
     }
 }

@@ -1,6 +1,5 @@
 package uet.oop.bomberman.entities;
 
-import javafx.geometry.Point2D;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.image.Image;
@@ -90,9 +89,63 @@ public class Explosion extends Entity {
             timeStart = time;
         }
 
-        List<Entity> eatable = map.getEntitiesWithFlags(FLAG_FLAME_EATABLE);
-        for (Entity toEat: eatable) {
-            if (toEat.getIntersectSize(this) != null) {
+        List<Entity> eatable = map.getEntitiesWithFlags(FLAG_FLAME_EATABLE | FLAG_PLAYER_HARDBLOCK);
+
+        if (advY == -1 || advX == -1) {
+            //handle wall
+            for (Entity toEat : eatable) {
+                if (toEat instanceof Wall) {
+                    while (toEat.getIntersectSize(this) != null) {
+                        length--;
+                    }
+                }
+            }
+            //handle brick
+            Entity brick = null;
+            for (Entity toEat : eatable) {
+                if (toEat instanceof Brick && toEat.getIntersectSize(this) != null) {
+                    brick = toEat;
+                }
+            }
+            if (brick != null) {
+                while (brick.getIntersectSize(this) != null) {
+                    length--;
+                }
+                ((Brick) brick).dead(time);
+            }
+            //handle rest
+            for (Entity toEat : eatable) {
+                if (toEat instanceof Bomb && toEat.getIntersectSize(this) != null) ((Bomb) toEat).dead();
+                if (toEat instanceof Balloom && toEat.getIntersectSize(this) != null) ((Balloom) toEat).dead(time);
+                if (toEat instanceof Oneal && toEat.getIntersectSize(this) != null) ((Oneal) toEat).dead(time);
+                if (toEat instanceof Bomber && toEat.getIntersectSize(this) != null) ((Bomber) toEat).dead(time);
+            }
+        } else {
+            //handle wall
+            for (Entity toEat : eatable) {
+                if (toEat instanceof Wall) {
+                    while (toEat.getIntersectSize(this) != null) {
+                        length--;
+                    }
+                }
+            }
+            //handle brick
+            for (Entity toEat : eatable) {
+                if (toEat.getIntersectSize(this) != null) {
+                    if (toEat instanceof Brick) {
+                        while (toEat.getIntersectSize(this) != null) {
+                            length--;
+                        }
+                        ((Brick) toEat).dead(time);
+                    }
+                }
+            }
+            //handle brick
+            for (Entity toEat : eatable) {
+                if (toEat instanceof Bomb && toEat.getIntersectSize(this) != null) ((Bomb) toEat).dead();
+                if (toEat instanceof Balloom && toEat.getIntersectSize(this) != null) ((Balloom) toEat).dead(time);
+                if (toEat instanceof Oneal && toEat.getIntersectSize(this) != null) ((Oneal) toEat).dead(time);
+                if (toEat instanceof Bomber && toEat.getIntersectSize(this) != null) ((Bomber) toEat).dead(time);
             }
         }
 
@@ -102,6 +155,7 @@ public class Explosion extends Entity {
             img = explodeSprite.playFrame(time);
             explodeLastImg = explodeLastSprite.playFrame(time);
         }
+
     }
 
     @Override
@@ -110,8 +164,8 @@ public class Explosion extends Entity {
         int sizeY = (advY != 0) ? length * Entity.SIZE : Entity.SIZE;
 
         if ((advX < 0) || (advY < 0)) {
-            return new Rectangle2D(x + (length - 1) * advX, y + (length - 1) * advY,
-                     sizeX, sizeY);
+            return new Rectangle2D(x + (length - 1) * advX * Entity.SIZE, y + (length - 1) * advY * Entity.SIZE,
+                    sizeX, sizeY);
         } else {
             return new Rectangle2D(x, y, sizeX, sizeY);
         }

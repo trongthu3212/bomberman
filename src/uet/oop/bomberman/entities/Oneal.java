@@ -15,6 +15,8 @@ public class Oneal extends Entity {
 
     private static final double DURATION = 0.100;
     private static final int VELOCITY = 1;
+    private static final double DEAD_FLAME_TIME = 0.400;
+    private double timeStartDead = 0;
 
     public Oneal(Map map, int x, int y) {
         super(map, x, y, FLAG_PLAYER_HARDBLOCK | FLAG_FLAME_EATABLE, Sprite.oneal_left1.getFxImage());
@@ -26,12 +28,27 @@ public class Oneal extends Entity {
         onealMoveRightSprite = new SpritePlayer(
                 Arrays.asList(Sprite.oneal_right1, Sprite.oneal_right2, Sprite.oneal_right3),
                 DURATION);
-        onealMoveRightSprite = new SpritePlayer(
+        onealDeadSprite = new SpritePlayer(
                 Arrays.asList(Sprite.oneal_dead), DURATION);
+
+        map.registerForUpdating(this);
     }
 
     @Override
     public void update(InputManager input, double time) {
+        if (timeStartDead != 0) {
+            if (time - timeStartDead > DEAD_FLAME_TIME) {
+                map.despawnEntity(this);
+            } else {
+                img = onealDeadSprite.playFrame(time);
+            }
+            return;
+        }
 
+
+    }
+
+    public void dead(double time) {
+        timeStartDead = time;
     }
 }

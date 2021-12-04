@@ -2,6 +2,7 @@ package uet.oop.bomberman.entities;
 
 import javafx.geometry.Point2D;
 import javafx.scene.canvas.GraphicsContext;
+import javafx.scene.control.Alert;
 import javafx.scene.input.KeyCode;
 import uet.oop.bomberman.InputManager;
 import uet.oop.bomberman.Map;
@@ -20,24 +21,25 @@ public class Bomber extends Entity {
     private SpritePlayer moveRightSprite;
     private SpritePlayer deadSprite;
 
+
     private int lastStepX;
     private int lastStepY;
 
     private int bombLeft;
     private int lastBombPutUnitX;
     private int lastBombPutUnitY;
-    private int totalBomb;
     private int bombLength;
     private double lastBombSpawnTime = 0;
 
     private static final double DURATION = 0.100;
     private static final double BOMB_SPAWN_COOLDOWN = 0.300;
+    private static final double DEAD_FLAME_TIME = 0.400;
+    private double timeStartDead = 0;
 
     public Bomber(Map map, int x, int y) {
-        super(map, x, y, FLAG_ENEMY_EATABLE | FLAG_FLAME_EATABLE, Sprite.player_down.getFxImage());
+        super(map, x, y, FLAG_ENEMY_EATABLE | FLAG_FLAME_EATABLE | FLAG_ENEMY_HARDBLOCK, Sprite.player_down.getFxImage());
 
-        totalBomb = 2;
-        bombLeft = totalBomb;
+        bombLeft = 1;
         bombLength = 1;
 
         lastBombPutUnitX = -1;
@@ -88,6 +90,15 @@ public class Bomber extends Entity {
 
     @Override
     public void update(InputManager input, double time) {
+        if (timeStartDead != 0) {
+            if (time - timeStartDead > DEAD_FLAME_TIME) {
+                map.despawnEntity(this);
+            } else {
+                img = deadSprite.playFrame(time);
+            }
+            return;
+        }
+
         int stepX = 0;
         int stepY = 0;
 
@@ -122,7 +133,7 @@ public class Bomber extends Entity {
             } else if ((stepY != 0) && (lastStepX != 0)) {
                 if (x % Entity.SIZE >= 24) {
                     stepX = (x + Entity.SIZE - 1) / Entity.SIZE * Entity.SIZE - x;
-                } else if ((x % Entity.SIZE <= 8))  {
+                } else if ((x % Entity.SIZE <= 8)) {
                     stepX = x / Entity.SIZE * Entity.SIZE - x;
                 }
             }
@@ -130,10 +141,25 @@ public class Bomber extends Entity {
             x += stepX;
             y += stepY;
 
-            List<Entity> entities = map.getEntitiesWithFlags(FLAG_PLAYER_HARDBLOCK);
-            for (Entity entity: entities) {
+            List<Entity> entities = map.getEntitiesWithFlags(FLAG_PLAYER_HARDBLOCK | FLAG_PLAYER_EATABLE);
+            for (Entity entity : entities) {
                 Point2D intersectSize = entity.getIntersectSize(this);
                 if (intersectSize != null) {
+                    if (entity instanceof SpeedItem) {
+                        bomberSpeed += 1;
+                        map.despawnEntity(entity);
+                        continue;
+                    }
+                    if (entity instanceof BombItem) {
+                        bombLeft += 1;
+                        map.despawnEntity(entity);
+                        continue;
+                    }
+                    if (entity instanceof FlameItem) {
+                        bombLength += 1;
+                        map.despawnEntity(entity);
+                        continue;
+                    }
                     // Perform smooth edge move
                     if ((intersectSize.getX() > 4) || (intersectSize.getY() > 4)) {
                         shouldMove = false;
@@ -150,5 +176,9 @@ public class Bomber extends Entity {
                 lastStepX = stepX;
             }
         }
+    }
+
+    public void dead(double time) {
+        timeStartDead = time;
     }
 }

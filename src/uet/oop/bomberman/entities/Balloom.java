@@ -16,8 +16,10 @@ public class Balloom extends Entity {
     private SpritePlayer balloomDeadSprite;
 
     private static final double DURATION = 0.200;
+    private static final double DEAD_FLAME_TIME = 0.400;
     private static final int VELOCITY = 1;
     private int currentDirection;
+    private double timeStartDead = 0;
 
     public Balloom(Map map, int x, int y) {
         super(map, x, y, FLAG_FLAME_EATABLE | FLAG_PLAYER_HARDBLOCK, Sprite.balloom_left1.getFxImage());
@@ -39,8 +41,17 @@ public class Balloom extends Entity {
 
     @Override
     public void update(InputManager manager, double time) {
+        if (timeStartDead != 0) {
+            if (time - timeStartDead > DEAD_FLAME_TIME) {
+                map.despawnEntity(this);
+            } else {
+                img = balloomDeadSprite.playFrame(time);
+            }
+            return;
+        }
+
         List<Entity> entities = map.getEntitiesWithFlags(FLAG_ENEMY_HARDBLOCK);
-        boolean sideMoveable[] = { true, true, true, true };
+        boolean sideMoveable[] = {true, true, true, true};
         boolean needChangeDir = false;
 
         int prevX = x;
@@ -74,11 +85,13 @@ public class Balloom extends Entity {
                 break;
         }
 
-        for (Entity entity: entities) {
+        for (Entity entity : entities) {
             if (entity instanceof Balloom) {
                 continue;
             }
             if (entity.getIntersectSize(this) != null) {
+                if (entity instanceof Bomber) ((Bomber) entity).dead(time);
+
                 if (!needChangeDir) {
                     needChangeDir = true;
                     x = prevX;
@@ -147,5 +160,9 @@ public class Balloom extends Entity {
                 }
             }
         }
+    }
+
+    public void dead(double time) {
+        timeStartDead = time;
     }
 }
