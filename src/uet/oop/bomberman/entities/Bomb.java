@@ -1,15 +1,18 @@
 package uet.oop.bomberman.entities;
 
+import javafx.scene.media.MediaPlayer;
 import uet.oop.bomberman.InputManager;
 import uet.oop.bomberman.Map;
 import uet.oop.bomberman.graphics.Sprite;
 import uet.oop.bomberman.graphics.SpritePlayer;
+import uet.oop.bomberman.sound.SoundEffect;
 
 import java.util.Arrays;
 
 public class Bomb extends Entity {
     private SpritePlayer bombSprite;
     private SpritePlayer bombExplodedSprite;
+    private MediaPlayer bombExplodeSoundPlayer;
     private Bomber spawner;
 
     private double timeStart = 0;
@@ -30,6 +33,8 @@ public class Bomb extends Entity {
         this.bombExplodedSprite = new SpritePlayer(Arrays.asList(Sprite.bomb_exploded, Sprite.bomb_exploded1, Sprite.bomb_exploded2),
                 DURATION);
         this.explodeLength = explodeLength;
+        this.bombExplodeSoundPlayer = new MediaPlayer(SoundEffect.BOMB_EXPLODE_SOUND);
+
         map.registerForUpdating(this);
     }
 
@@ -74,6 +79,8 @@ public class Bomb extends Entity {
 
             int xUnit = x / Entity.SIZE;
             int yUnit = y / Entity.SIZE;
+
+            bombExplodeSoundPlayer.play();
 
             map.spawnEntity(new Explosion(map, xUnit - 1, yUnit, 0, explodeLength));
             map.spawnEntity(new Explosion(map, xUnit + 1, yUnit, 1, explodeLength));

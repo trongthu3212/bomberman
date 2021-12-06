@@ -5,6 +5,7 @@ import uet.oop.bomberman.entities.*;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
@@ -21,7 +22,7 @@ public class Map {
     private static int columns;
     private boolean isInUpdate;
 
-    public Map(int level) throws FileNotFoundException {
+    public Map(int level) throws FileNotFoundException, URISyntaxException {
         this.isInUpdate = false;
 
         String path = "res/levels/Level" + level + ".txt";

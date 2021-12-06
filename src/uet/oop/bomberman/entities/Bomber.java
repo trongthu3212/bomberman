@@ -3,12 +3,17 @@ package uet.oop.bomberman.entities;
 import javafx.geometry.Point2D;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.Alert;
+import javafx.scene.media.Media;
 import javafx.scene.input.KeyCode;
+import javafx.scene.media.MediaPlayer;
 import uet.oop.bomberman.InputManager;
 import uet.oop.bomberman.Map;
 import uet.oop.bomberman.graphics.Sprite;
 import uet.oop.bomberman.graphics.SpritePlayer;
+import uet.oop.bomberman.sound.SoundEffect;
 
+import java.io.File;
+import java.net.URISyntaxException;
 import java.util.Arrays;
 import java.util.List;
 
@@ -30,13 +35,18 @@ public class Bomber extends Entity {
     private int lastBombPutUnitY;
     private int bombLength;
     private double lastBombSpawnTime = 0;
+    private MediaPlayer walkSoundPlayer;
+    private MediaPlayer powerUpSoundPlayer;
+    private MediaPlayer putBombSoundPlayer;
+    private double lastWalkSoundTime = 0;
 
     private static final double DURATION = 0.100;
     private static final double BOMB_SPAWN_COOLDOWN = 0.300;
     private static final double DEAD_FLAME_TIME = 0.400;
+    private static final double WALK_SOUND_DURATION = 1.000;
     private double timeStartDead = 0;
 
-    public Bomber(Map map, int x, int y) {
+    public Bomber(Map map, int x, int y) throws URISyntaxException {
         super(map, x, y, FLAG_ENEMY_EATABLE | FLAG_FLAME_EATABLE | FLAG_ENEMY_HARDBLOCK, Sprite.player_down.getFxImage());
 
         bombLeft = 1;
@@ -55,6 +65,10 @@ public class Bomber extends Entity {
                 Sprite.player_right_2), DURATION);
         deadSprite = new SpritePlayer(Arrays.asList(Sprite.player_dead1, Sprite.player_dead2,
                 Sprite.player_dead3), DURATION);
+
+        walkSoundPlayer = new MediaPlayer(SoundEffect.WALK_SOUND);
+        powerUpSoundPlayer = new MediaPlayer(SoundEffect.POWERUP_SOUND);
+        putBombSoundPlayer = new MediaPlayer(SoundEffect.PUT_BOMB_SOUND);
 
         map.registerForUpdating(this);
     }
@@ -80,6 +94,9 @@ public class Bomber extends Entity {
 
         bombLeft--;
         lastBombSpawnTime = currentTime;
+
+        putBombSoundPlayer.stop();
+        putBombSoundPlayer.play();
 
         map.spawnEntity(new Bomb(map, this, unitSpawnBombX, unitSpawnBombY, bombLength));
     }
@@ -145,19 +162,26 @@ public class Bomber extends Entity {
             for (Entity entity : entities) {
                 Point2D intersectSize = entity.getIntersectSize(this);
                 if (intersectSize != null) {
+                    boolean meetPowerup = false;
                     if (entity instanceof SpeedItem) {
                         bomberSpeed += 1;
                         map.despawnEntity(entity);
-                        continue;
+                        meetPowerup = true;
                     }
                     if (entity instanceof BombItem) {
                         bombLeft += 1;
                         map.despawnEntity(entity);
-                        continue;
+                        meetPowerup = true;
                     }
                     if (entity instanceof FlameItem) {
                         bombLength += 1;
                         map.despawnEntity(entity);
+                        meetPowerup = true;
+                    }
+                    if (meetPowerup) {
+                        powerUpSoundPlayer.stop();
+                        powerUpSoundPlayer.play();
+
                         continue;
                     }
                     // Perform smooth edge move
@@ -172,6 +196,13 @@ public class Bomber extends Entity {
                 x -= stepX;
                 y -= stepY;
             } else {
+                if (time - lastWalkSoundTime > WALK_SOUND_DURATION / bomberSpeed) {
+                    lastWalkSoundTime = time;
+
+                    walkSoundPlayer.stop();
+                    walkSoundPlayer.play();
+                }
+
                 lastStepY = stepY;
                 lastStepX = stepX;
             }

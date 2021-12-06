@@ -6,12 +6,15 @@ import javafx.scene.Group;
 import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
+import javafx.scene.media.MediaPlayer;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 import uet.oop.bomberman.entities.*;
 import uet.oop.bomberman.graphics.Sprite;
+import uet.oop.bomberman.sound.Music;
 
 import java.io.FileNotFoundException;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -23,10 +26,11 @@ public class BombermanGame extends Application {
     private List<Entity> entities = new ArrayList<>();
     private List<Entity> stillObjects = new ArrayList<>();
     private InputManager inputManager;
+    private MediaPlayer themePlayer;
 
     private Map map = new Map(1);
 
-    public BombermanGame() throws FileNotFoundException {
+    public BombermanGame() throws FileNotFoundException, URISyntaxException {
     }
 
     public static void main(String[] args) {
@@ -50,6 +54,9 @@ public class BombermanGame extends Application {
         // Them scene vao stage
         stage.setScene(scene);
         stage.show();
+
+        themePlayer = new MediaPlayer(Music.STAGE_THEME_MUSIC);
+        themePlayer.play();
 
         final long startNanoTime = System.nanoTime();
         new AnimationTimer() {
