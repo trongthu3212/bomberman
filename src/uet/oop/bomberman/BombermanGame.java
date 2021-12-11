@@ -6,6 +6,8 @@ import javafx.scene.Group;
 import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
+import javafx.scene.control.Alert;
+import javafx.scene.control.ButtonType;
 import javafx.scene.media.MediaPlayer;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
@@ -13,6 +15,7 @@ import uet.oop.bomberman.entities.*;
 import uet.oop.bomberman.graphics.Sprite;
 import uet.oop.bomberman.sound.Music;
 
+import java.awt.*;
 import java.io.FileNotFoundException;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
@@ -22,6 +25,8 @@ public class BombermanGame extends Application {
 
     private GraphicsContext gc;
     private Canvas canvas;
+    private Stage stage;
+    private Alert noMoreLevelAlert;
 
     private List<Entity> entities = new ArrayList<>();
     private List<Entity> stillObjects = new ArrayList<>();
@@ -40,9 +45,7 @@ public class BombermanGame extends Application {
         Application.launch(BombermanGame.class);
     }
 
-    @Override
-    public void start(Stage stage) {
-        // Tao Canvas
+    private void remakeGameStage() {
         canvas = new Canvas(Sprite.SCALED_SIZE * map.getColumns(), Sprite.SCALED_SIZE * map.getRows());
         gc = canvas.getGraphicsContext2D();
 
@@ -56,7 +59,15 @@ public class BombermanGame extends Application {
 
         // Them scene vao stage
         stage.setScene(scene);
+        stage.setTitle("Bomberman - Level " + nextMapLevel);
+        stage.centerOnScreen();
         stage.show();
+    }
+
+    @Override
+    public void start(Stage stage) {
+        this.stage = stage;
+        remakeGameStage();
 
         themePlayer = new MediaPlayer(Music.STAGE_THEME_MUSIC);
         themePlayer.play();
@@ -82,6 +93,9 @@ public class BombermanGame extends Application {
     }
 
     public void update(double time) throws FileNotFoundException, URISyntaxException {
+        if (noMoreLevelAlert != null) {
+            return;
+        }
         if (map.getGameState() != Map.GAME_STATE_PENDING) {
             if (map.getGameState() == Map.GAME_STATE_VICTORY) {
                 if (themeGameDoneTimeStart == 0) {
@@ -89,11 +103,23 @@ public class BombermanGame extends Application {
 
                     themeGameDoneTimeStart = time;
                     victorySoundPlayer.play();
-                } else if (time - themeGameDoneTimeStart > 5.0) {
-                    themePlayer.play();
-
+                } else if (time - themeGameDoneTimeStart > 4.5) {
                     nextMapLevel++;
-                    map = new Map(nextMapLevel);
+
+                    try {
+                        map = new Map(nextMapLevel);
+                    } catch (Exception exception) {
+                        noMoreLevelAlert = new Alert(Alert.AlertType.INFORMATION, "Bạn đã chơi hết các bàn!",
+                                ButtonType.OK);
+
+                        noMoreLevelAlert.show();
+                        stage.close();
+
+                        return;
+                    }
+
+                    themePlayer.play();
+                    remakeGameStage();
                 }
             } else {
                 themePlayer.stop();
@@ -107,7 +133,7 @@ public class BombermanGame extends Application {
     }
 
     public void render() {
-        gc.setFill(Color.web("#81c483"));
+        gc.setFill(Color.web("#50a000"));
         gc.fillRect(0, 0, canvas.getWidth(), canvas.getHeight());
         map.render(gc);
     }

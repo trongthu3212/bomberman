@@ -21,7 +21,7 @@ public class Portal extends Entity {
         List<Entity> enemies = map.getEntitiesWithFlags(FLAG_ENEMY);
         if (enemies.isEmpty()) {
             Point2D intersect = map.getBomberEntity().getIntersectSize(this);
-            if (intersect != null && ((intersect.getX() >= Entity.SIZE / 4) || (intersect.getY() >= Entity.SIZE / 4))) {
+            if (intersect != null) {
                 map.setGameStateVictory();
             }
         }
