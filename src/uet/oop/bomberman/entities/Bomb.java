@@ -41,8 +41,8 @@ public class Bomb extends Entity {
     @Override
     public void update(InputManager input, double time) {
         if (isDead) {
-            int xUnit = x / Entity.SIZE;
-            int yUnit = y / Entity.SIZE;
+            int xUnit = (int)(x / Entity.SIZE);
+            int yUnit = (int)(y / Entity.SIZE);
 
             map.spawnEntity(new Explosion(map, xUnit - 1, yUnit, 0, explodeLength));
             map.spawnEntity(new Explosion(map, xUnit + 1, yUnit, 1, explodeLength));
@@ -77,8 +77,8 @@ public class Bomb extends Entity {
 
             flags &= ~(FLAG_PLAYER_HARDBLOCK | FLAG_ENEMY_HARDBLOCK);
 
-            int xUnit = x / Entity.SIZE;
-            int yUnit = y / Entity.SIZE;
+            int xUnit = (int)(x / Entity.SIZE);
+            int yUnit = (int)(y / Entity.SIZE);
 
             bombExplodeSoundPlayer.play();
 

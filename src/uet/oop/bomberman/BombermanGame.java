@@ -27,8 +27,11 @@ public class BombermanGame extends Application {
     private List<Entity> stillObjects = new ArrayList<>();
     private InputManager inputManager;
     private MediaPlayer themePlayer;
+    private MediaPlayer victorySoundPlayer;
 
     private Map map = new Map(1);
+    private int nextMapLevel = 1;
+    private double themeGameDoneTimeStart = 0.0;
 
     public BombermanGame() throws FileNotFoundException, URISyntaxException {
     }
@@ -58,19 +61,49 @@ public class BombermanGame extends Application {
         themePlayer = new MediaPlayer(Music.STAGE_THEME_MUSIC);
         themePlayer.play();
 
+        victorySoundPlayer = new MediaPlayer(Music.STAGE_VICTORY_MUSIC);
+
         final long startNanoTime = System.nanoTime();
         new AnimationTimer() {
             public void handle(long currentNanoTime) {
                 double time = (currentNanoTime - startNanoTime) / 1000000000.0;
 
                 render();
-                update(time);
+
+                try {
+                    update(time);
+                } catch (FileNotFoundException e) {
+                    e.printStackTrace();
+                } catch (URISyntaxException e) {
+                    e.printStackTrace();
+                }
             }
         }.start();
     }
 
-    public void update(double time) {
-        map.update(inputManager, time);
+    public void update(double time) throws FileNotFoundException, URISyntaxException {
+        if (map.getGameState() != Map.GAME_STATE_PENDING) {
+            if (map.getGameState() == Map.GAME_STATE_VICTORY) {
+                if (themeGameDoneTimeStart == 0) {
+                    themePlayer.stop();
+
+                    themeGameDoneTimeStart = time;
+                    victorySoundPlayer.play();
+                } else if (time - themeGameDoneTimeStart > 5.0) {
+                    themePlayer.play();
+
+                    nextMapLevel++;
+                    map = new Map(nextMapLevel);
+                }
+            } else {
+                themePlayer.stop();
+                themePlayer.play();
+
+                map = new Map(nextMapLevel);
+            }
+        } else {
+            map.update(inputManager, time);
+        }
     }
 
     public void render() {

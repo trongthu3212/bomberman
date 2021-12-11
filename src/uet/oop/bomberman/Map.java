@@ -11,19 +11,27 @@ import java.util.List;
 import java.util.Scanner;
 
 public class Map {
+    public static final int GAME_STATE_PENDING = 0;
+    public static final int GAME_STATE_LOSE = 1;
+    public static final int GAME_STATE_VICTORY = 2;
+
     private List<Entity> layer0Entities = new ArrayList<>();
     private List<Entity> layer1Entities = new ArrayList<>();
     private List<Entity> layer2Entities = new ArrayList<>();
     private List<Entity> registeredUpdateEntities = new ArrayList<>();
     private List<Entity> pendingUpdateRegisters = new ArrayList<>();
     private List<Entity> pendingUpdateRemovals = new ArrayList<>();
+    private Bomber bomberEntity;
 
     private static int rows;
     private static int columns;
+
     private boolean isInUpdate;
+    private int gameState;
 
     public Map(int level) throws FileNotFoundException, URISyntaxException {
         this.isInUpdate = false;
+        this.gameState = GAME_STATE_PENDING;
 
         String path = "res/levels/Level" + level + ".txt";
         Scanner scanner = new Scanner(new File(path));
@@ -43,10 +51,17 @@ public class Map {
                         layer2Entities.add(new Brick(this, j, i));
                         break;
                     case 'x':
+                        // Portals are hidden behind brick
+                        layer2Entities.add(new Brick(this, j, i));
                         layer0Entities.add(new Portal(this, j, i));
                         break;
                     case 'p':
-                        layer1Entities.add(new Bomber(this, j, i));
+                        if (bomberEntity != null) {
+                            throw new RuntimeException("Bomber da ton tai!");
+                        }
+
+                        bomberEntity = new Bomber(this, j, i);
+                        layer1Entities.add(bomberEntity);
                         break;
                     case '1':
                         layer1Entities.add(new Balloom(this, j, i));
@@ -55,12 +70,15 @@ public class Map {
                         layer1Entities.add(new Oneal(this, j, i));
                         break;
                     case 'b':
+                        layer2Entities.add(new Brick(this, j, i));
                         layer0Entities.add(new BombItem(this, j, i));
                         break;
                     case 'f':
+                        layer2Entities.add(new Brick(this, j, i));
                         layer0Entities.add(new FlameItem(this, j, i));
                         break;
                     case 's':
+                        layer2Entities.add(new Brick(this, j, i));
                         layer0Entities.add(new SpeedItem(this, j, i));
                         break;
                     default:
@@ -139,7 +157,7 @@ public class Map {
     public List<Entity> getEntitiesWithFlags(int flagMask) {
         List<Entity> result = new ArrayList<>();
 
-        for (Entity entity: layer0Entities) {
+        for (Entity entity: layer2Entities) {
             if ((entity.getFlags() & flagMask) != 0) {
                 result.add(entity);
             }
@@ -151,7 +169,7 @@ public class Map {
             }
         }
 
-        for (Entity entity: layer2Entities) {
+        for (Entity entity: layer0Entities) {
             if ((entity.getFlags() & flagMask) != 0) {
                 result.add(entity);
             }
@@ -164,5 +182,21 @@ public class Map {
         layer0Entities.forEach(e -> e.render(context));
         layer1Entities.forEach(e -> e.render(context));
         layer2Entities.forEach(e -> e.render(context));
+    }
+
+    public Bomber getBomberEntity() {
+        return bomberEntity;
+    }
+
+    public void setGameStateLose() {
+        gameState = GAME_STATE_LOSE;
+    }
+
+    public void setGameStateVictory() {
+        gameState = GAME_STATE_VICTORY;
+    }
+
+    int getGameState() {
+        return gameState;
     }
 }

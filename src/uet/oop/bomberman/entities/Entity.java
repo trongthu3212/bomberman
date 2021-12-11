@@ -10,10 +10,10 @@ import uet.oop.bomberman.graphics.Sprite;
 
 public abstract class Entity {
     //Tọa độ X tính từ góc trái trên trong Canvas
-    protected int x;
+    protected double x;
 
     //Tọa độ Y tính từ góc trái trên trong Canvas
-    protected int y;
+    protected double y;
 
     protected Image img;
 
@@ -27,6 +27,7 @@ public abstract class Entity {
     public static final int FLAG_PLAYER_EATABLE = 1 << 3;
     public static final int FLAG_ENEMY_EATABLE = 1 << 4;
     public static final int FLAG_FLAME_EATABLE = 1 << 5;
+    public static final int FLAG_ENEMY = 1 << 6;
 
     public static final int SIZE = Sprite.SCALED_SIZE;
 

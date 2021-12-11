@@ -18,7 +18,7 @@ import java.util.Arrays;
 import java.util.List;
 
 public class Bomber extends Entity {
-    int bomberSpeed = 2;
+    private double bomberSpeed = 2;
 
     private SpritePlayer moveUpSprite;
     private SpritePlayer moveDownSprite;
@@ -26,9 +26,8 @@ public class Bomber extends Entity {
     private SpritePlayer moveRightSprite;
     private SpritePlayer deadSprite;
 
-
-    private int lastStepX;
-    private int lastStepY;
+    private double lastStepX;
+    private double lastStepY;
 
     private int bombLeft;
     private int lastBombPutUnitX;
@@ -79,8 +78,8 @@ public class Bomber extends Entity {
         }
 
         // Round up the unit to spawn depending on how many percentage of the tile we are sitting on
-        int unitSpawnBombX = (x + ((x % Entity.SIZE >= 24) ? Entity.SIZE - 1 : 0)) / Entity.SIZE;
-        int unitSpawnBombY = (y + ((y % Entity.SIZE >= 24) ? Entity.SIZE - 1 : 0)) / Entity.SIZE;
+        int unitSpawnBombX = (int)((x + ((x % Entity.SIZE >= 24) ? Entity.SIZE - 1 : 0))) / Entity.SIZE;
+        int unitSpawnBombY = (int)((y + ((y % Entity.SIZE >= 24) ? Entity.SIZE - 1 : 0))) / Entity.SIZE;
 
         if ((lastBombPutUnitX > 0) && (lastBombPutUnitY > 0)) {
             if ((lastBombPutUnitX == unitSpawnBombX) && (lastBombPutUnitY == unitSpawnBombY)) {
@@ -110,14 +109,15 @@ public class Bomber extends Entity {
         if (timeStartDead != 0) {
             if (time - timeStartDead > DEAD_FLAME_TIME) {
                 map.despawnEntity(this);
+                map.setGameStateLose();
             } else {
                 img = deadSprite.playFrame(time);
             }
             return;
         }
 
-        int stepX = 0;
-        int stepY = 0;
+        double stepX = 0;
+        double stepY = 0;
 
         if (input.isKeyPressed(KeyCode.LEFT)) {
             img = moveLeftSprite.playFrame(time);
@@ -143,15 +143,15 @@ public class Bomber extends Entity {
             // Try smooth movement on turn
             if ((stepX != 0) && (lastStepY != 0)) {
                 if (y % Entity.SIZE >= 24) {
-                    stepY = (y + Entity.SIZE - 1) / Entity.SIZE * Entity.SIZE - y;
+                    stepY = (int)(y + Entity.SIZE - 1) / Entity.SIZE * Entity.SIZE - y;
                 } else if ((y % Entity.SIZE <= 8)) {
-                    stepY = y / Entity.SIZE * Entity.SIZE - y;
+                    stepY = (int)(y / Entity.SIZE) * Entity.SIZE - y;
                 }
             } else if ((stepY != 0) && (lastStepX != 0)) {
                 if (x % Entity.SIZE >= 24) {
-                    stepX = (x + Entity.SIZE - 1) / Entity.SIZE * Entity.SIZE - x;
+                    stepX = (int)((x + Entity.SIZE - 1) / Entity.SIZE) * Entity.SIZE - x;
                 } else if ((x % Entity.SIZE <= 8)) {
-                    stepX = x / Entity.SIZE * Entity.SIZE - x;
+                    stepX = (int)(x / Entity.SIZE) * Entity.SIZE - x;
                 }
             }
 
@@ -164,7 +164,7 @@ public class Bomber extends Entity {
                 if (intersectSize != null) {
                     boolean meetPowerup = false;
                     if (entity instanceof SpeedItem) {
-                        bomberSpeed += 1;
+                        bomberSpeed += 0.2;
                         map.despawnEntity(entity);
                         meetPowerup = true;
                     }
@@ -210,6 +210,7 @@ public class Bomber extends Entity {
     }
 
     public void dead(double time) {
-        timeStartDead = time;
+        if (timeStartDead == 0)
+            timeStartDead = time;
     }
 }
