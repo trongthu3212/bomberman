@@ -105,6 +105,7 @@ public class BombermanGame extends Application {
                     victorySoundPlayer.play();
                 } else if (time - themeGameDoneTimeStart > 4.5) {
                     nextMapLevel++;
+                    themeGameDoneTimeStart = 0;
 
                     try {
                         map = new Map(nextMapLevel);
