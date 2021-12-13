@@ -99,6 +99,7 @@ public class BombermanGame extends Application {
         if (map.getGameState() != Map.GAME_STATE_PENDING) {
             if (map.getGameState() == Map.GAME_STATE_VICTORY) {
                 if (themeGameDoneTimeStart == 0) {
+                    victorySoundPlayer.stop();
                     themePlayer.stop();
 
                     themeGameDoneTimeStart = time;
